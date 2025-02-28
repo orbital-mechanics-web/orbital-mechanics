@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Modern Solar System Simulator</title>
+    <style>
+      /* Import a modern font from Google */
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+      body {
+        margin: 0;
+        font-family: "Roboto", sans-serif;
+        background: radial-gradient(circle, #1d1d1d, #000);
+        overflow: hidden;
+        color: #f0f0f0;
+      }
+      /* CTA Banner */
+      #cta {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85);
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        z-index: 110;
+        text-align: center;
+      }
+      #cta h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #ffd700;
+      }
+      #cta p {
+        margin: 5px 0 0;
+        font-size: 16px;
+        color: #f0f0f0;
+      }
+      /* Center canvas and add subtle shadow */
+      #canvas {
+        display: block;
+        margin: 100px auto 20px; /* space for the CTA */
+        background-color: #000;
+        border: 2px solid #333;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+      }
+      /* Control Panel */
+      #control-panel {
+        text-align: center;
+        max-width: 220px;
+        position: fixed;
+        top: 100px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+      #control-panel button {
+        margin: 5px;
+        padding: 8px 12px;
+        font-size: 14px;
+        border: none;
+        border-radius: 4px;
+        background: #444;
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+      }
+      #control-panel button:hover {
+        background: #666;
+        transform: scale(1.05);
+      }
+      #sim-params {
+        margin-top: 10px;
+        font-size: 14px;
+        text-align: center;
+      }
+      /* Legend Sidebar */
+      #legend {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        width: 180px;
+      }
+      #legend h3 {
+        margin-top: 0;
+        font-size: 18px;
+        text-align: center;
+        border-bottom: 1px solid #444;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+      }
+      .legend-icon {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-right: 10px;
+      }
+      /* Define colors for each object */
+      .sun {
+        background: yellow;
+      }
+      .mercury {
+        background: rgb(169, 169, 169);
+      }
+      .venus {
+        background: rgb(218, 165, 32);
+      }
+      .earth {
+        background: blue;
+      }
+      .mars {
+        background: red;
+      }
+      .jupiter {
+        background: rgb(205, 133, 63);
+      }
+      .saturn {
+        background: rgb(210, 180, 140);
+      }
+      /* Planet Details Panel */
+      #planet-details {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        z-index: 100;
+        max-width: 320px;
+        display: none;
+      }
+      #planet-details h2 {
+        margin-top: 0;
+        font-size: 24px;
+        color: #ffd700;
+        text-align: center;
+      }
+      #planet-details p {
+        margin: 10px 0;
+        font-size: 16px;
+        line-height: 1.4;
+        white-space: pre-line;
+        text-align: center;
+      }
+      #planet-details button {
+        display: block;
+        margin: 15px auto 0;
+        padding: 8px 12px;
+        font-size: 14px;
+        border: none;
+        border-radius: 4px;
+        background: #444;
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      #planet-details button:hover {
+        background: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- CTA Banner -->
+    <div id="cta">
+      <h1>Explore the Solar System</h1>
+      <p>
+        Use the control panel to adjust simulation speed and zoom.
+        <br />
+        Click on any planet to learn more about its orbit.
+      </p>
+    </div>
+    <!-- Control Panel -->
+    <div id="control-panel">
+      <div>
+        <button id="speed-up">Speed +</button>
+        <button id="speed-down">Speed -</button>
+        <button id="zoom-in">Zoom In</button>
+        <button id="zoom-out">Zoom Out</button>
+      </div>
+      <div style="margin-top: 5px">
+        <button id="reset">Reset</button>
+        <button id="stop">Stop</button>
+        <button id="resume">Resume</button>
+      </div>
+      <div id="sim-params">
+        <span id="sim-speed-display">Speed: 1.00</span><br />
+        <span id="zoom-display">Zoom: 1.00</span>
+      </div>
+    </div>
+    <!-- Canvas for simulation -->
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <!-- Planet Details Panel -->
+    <div id="planet-details">
+      <h2 id="planet-name"></h2>
+      <p id="planet-info"></p>
+      <button id="close-details">Close</button>
+    </div>
+    <!-- Legend Sidebar -->
+    <div id="legend">
+      <h3>Legend</h3>
+      <div class="legend-item">
+        <span class="legend-icon sun"></span>
+        <span class="legend-text">Sun</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon mercury"></span>
+        <span class="legend-text">Mercury</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon venus"></span>
+        <span class="legend-text">Venus</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon earth"></span>
+        <span class="legend-text">Earth</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon mars"></span>
+        <span class="legend-text">Mars</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon jupiter"></span>
+        <span class="legend-text">Jupiter</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon saturn"></span>
+        <span class="legend-text">Saturn</span>
+      </div>
+    </div>
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      const sunPos = { x: width / 2, y: height / 2 };
+      const sunRadius = 30;
+
+      // Define colors (for JS drawing, matching our legend)
+      const COLORS = {
+        YELLOW: "yellow",
+        BLUE: "blue",
+        RED: "red",
+        GRAY: "rgb(169,169,169)",
+        WHITE: "#fff",
+      };
+
+      // Define planets with their properties
+      const planets = [
+        {
+          name: "Mercury",
+          color: COLORS.GRAY,
+          radius: 5,
+          orbitRadius: 60,
+          orbitSpeed: 0.02,
+          angle: 0,
+        },
+        {
+          name: "Venus",
+          color: "rgb(218,165,32)",
+          radius: 8,
+          orbitRadius: 90,
+          orbitSpeed: 0.015,
+          angle: 0,
+        },
+        {
+          name: "Earth",
+          color: COLORS.BLUE,
+          radius: 10,
+          orbitRadius: 120,
+          orbitSpeed: 0.01,
+          angle: 0,
+        },
+        {
+          name: "Mars",
+          color: COLORS.RED,
+          radius: 8,
+          orbitRadius: 150,
+          orbitSpeed: 0.008,
+          angle: 0,
+        },
+        {
+          name: "Jupiter",
+          color: "rgb(205,133,63)",
+          radius: 14,
+          orbitRadius: 200,
+          orbitSpeed: 0.005,
+          angle: 0,
+        },
+        {
+          name: "Saturn",
+          color: "rgb(210,180,140)",
+          radius: 12,
+          orbitRadius: 250,
+          orbitSpeed: 0.004,
+          angle: 0,
+        },
+      ];
+
+      // Simulation parameters
+      let simSpeed = 1.0;
+      let zoomFactor = 1.0;
+      let selectedPlanet = null;
+      let isPaused = false;
+      let animationFrameId;
+
+      // Update simulation parameter display
+      function updateSimParams() {
+        document.getElementById("sim-speed-display").innerText =
+          "Speed: " + simSpeed.toFixed(2);
+        document.getElementById("zoom-display").innerText =
+          "Zoom: " + zoomFactor.toFixed(2);
+      }
+
+      // Control panel event listeners
+      document.getElementById("speed-up").addEventListener("click", () => {
+        simSpeed += 0.1;
+        updateSimParams();
+      });
+      document.getElementById("speed-down").addEventListener("click", () => {
+        simSpeed = Math.max(0.1, simSpeed - 0.1);
+        updateSimParams();
+      });
+      document.getElementById("zoom-in").addEventListener("click", () => {
+        zoomFactor *= 1.1;
+        updateSimParams();
+      });
+      document.getElementById("zoom-out").addEventListener("click", () => {
+        zoomFactor /= 1.1;
+        updateSimParams();
+      });
+      document.getElementById("reset").addEventListener("click", () => {
+        simSpeed = 1.0;
+        zoomFactor = 1.0;
+        planets.forEach((planet) => (planet.angle = 0));
+        updateSimParams();
+      });
+      document.getElementById("stop").addEventListener("click", () => {
+        if (!isPaused) {
+          isPaused = true;
+          cancelAnimationFrame(animationFrameId);
+        }
+      });
+      document.getElementById("resume").addEventListener("click", () => {
+        if (isPaused) {
+          isPaused = false;
+          animate();
+        }
+      });
+
+      // Keyboard controls (optional)
+      document.addEventListener("keydown", (event) => {
+        switch (event.key) {
+          case "ArrowUp":
+            simSpeed += 0.1;
+            updateSimParams();
+            break;
+          case "ArrowDown":
+            simSpeed = Math.max(0.1, simSpeed - 0.1);
+            updateSimParams();
+            break;
+          case "z":
+          case "Z":
+            zoomFactor *= 1.1;
+            updateSimParams();
+            break;
+          case "x":
+          case "X":
+            zoomFactor /= 1.1;
+            updateSimParams();
+            break;
+        }
+      });
+
+      // Handle canvas mouse clicks to show planet details
+      canvas.addEventListener("mousedown", (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        selectedPlanet = null;
+        for (const planet of planets) {
+          const orbit = planet.orbitRadius * zoomFactor;
+          const planetX = sunPos.x + orbit * Math.cos(planet.angle);
+          const planetY = sunPos.y + orbit * Math.sin(planet.angle);
+          const distance = Math.hypot(mouseX - planetX, mouseY - planetY);
+          if (distance <= planet.radius + 3) {
+            selectedPlanet = planet;
+            showPlanetDetails(planet);
+            break;
+          }
+        }
+      });
+
+      // Show details panel for a planet
+      function showPlanetDetails(planet) {
+        const detailsPanel = document.getElementById("planet-details");
+        document.getElementById("planet-name").innerText = planet.name;
+        document.getElementById("planet-info").innerText =
+          `Orbit Radius: ${planet.orbitRadius}\nOrbit Speed: ${planet.orbitSpeed}`;
+        detailsPanel.style.display = "block";
+      }
+
+      // Close details panel
+      document.getElementById("close-details").addEventListener("click", () => {
+        document.getElementById("planet-details").style.display = "none";
+        selectedPlanet = null;
+      });
+
+      // Main animation loop
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw the sun
+        ctx.beginPath();
+        ctx.arc(sunPos.x, sunPos.y, sunRadius, 0, Math.PI * 2);
+        ctx.fillStyle = COLORS.YELLOW;
+        ctx.fill();
+
+        // Draw each planet and its orbit
+        for (const planet of planets) {
+          const orbitRadius = planet.orbitRadius * zoomFactor;
+          // Draw orbit path
+          ctx.beginPath();
+          ctx.arc(sunPos.x, sunPos.y, orbitRadius, 0, Math.PI * 2);
+          ctx.strokeStyle = COLORS.WHITE;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // Update angle for orbit
+          planet.angle += planet.orbitSpeed * simSpeed;
+          const x = sunPos.x + orbitRadius * Math.cos(planet.angle);
+          const y = sunPos.y + orbitRadius * Math.sin(planet.angle);
+
+          // Draw planet
+          ctx.beginPath();
+          ctx.arc(x, y, planet.radius, 0, Math.PI * 2);
+          ctx.fillStyle = planet.color;
+          ctx.fill();
+
+          // Highlight selected planet
+          if (selectedPlanet === planet) {
+            ctx.beginPath();
+            ctx.arc(x, y, planet.radius + 4, 0, Math.PI * 2);
+            ctx.strokeStyle = COLORS.GREEN;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+        animationFrameId = requestAnimationFrame(animate);
+      }
+
+      // Start simulation
+      animate();
+    </script>
+  </body>
+</html>
